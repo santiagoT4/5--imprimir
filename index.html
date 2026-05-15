@@ -1,178 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cotilpez - Impresión Bluetooth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Cotilpez - Impresión con RawBT</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+        
         body {
             font-family: 'Courier New', monospace;
-            background: #f0f0f0;
-            padding: 20px;
+            background: #e8ecf1;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 16px;
         }
-        .ticket {
-            max-width: 400px;
+        
+        .paper {
+            max-width: 480px;
             width: 100%;
-            margin: 0 auto;
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
             overflow: hidden;
+            animation: fadeIn 0.3s ease;
         }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         .header {
             background: #0f766e;
             color: white;
-            padding: 15px;
+            padding: 20px;
             text-align: center;
         }
+        
         .header h1 {
-            font-size: 18px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
         }
+        
         .header p {
             font-size: 12px;
             opacity: 0.9;
         }
-        .contenido {
+        
+        .content {
             padding: 20px;
         }
-        .info-venta {
-            background: #f8f9fa;
+        
+        .info-card {
+            background: #f0fdf4;
+            border-left: 4px solid #0f766e;
             padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
             font-size: 13px;
-            border-left: 3px solid #0f766e;
         }
-        .info-venta p {
-            margin: 5px 0;
+        
+        .info-card p {
+            margin: 4px 0;
         }
-        .preview {
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
+        
+        .ticket-preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
             font-family: 'Courier New', monospace;
             font-size: 11px;
+            line-height: 1.5;
             white-space: pre-wrap;
+            word-break: break-all;
             max-height: 350px;
             overflow: auto;
         }
-        .btn-imprimir {
+        
+        .ticket-preview::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .ticket-preview::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        
+        .ticket-preview::-webkit-scrollbar-thumb {
             background: #0f766e;
-            color: white;
-            border: none;
-            padding: 14px;
+            border-radius: 10px;
+        }
+        
+        button {
             width: 100%;
-            border-radius: 8px;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
+            transition: all 0.2s ease;
+            margin-bottom: 10px;
         }
-        .btn-imprimir:active {
-            transform: scale(0.98);
+        
+        button:active {
+            transform: scale(0.97);
+        }
+        
+        .btn-primary {
+            background: #0f766e;
+            color: white;
+            box-shadow: 0 2px 8px rgba(15,118,110,0.3);
+        }
+        
+        .btn-primary:hover {
             background: #0d5c56;
         }
-        .btn-copiar {
-            background: #6c757d;
+        
+        .btn-secondary {
+            background: #64748b;
             color: white;
-            border: none;
-            padding: 10px;
-            width: 48%;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
         }
-        .btn-cerrar {
-            background: #dc3545;
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
             color: white;
-            border: none;
-            padding: 10px;
-            width: 48%;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
         }
-        .botones-row {
+        
+        .flex-buttons {
             display: flex;
-            gap: 10px;
-            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
         }
-        .estado {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
+        
+        .flex-buttons button {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 12px;
             font-size: 12px;
             text-align: center;
+            margin-top: 12px;
         }
-        .estado-exito {
-            background: #d4edda;
-            color: #155724;
+        
+        .status-info {
+            background: #dbeafe;
+            color: #1e40af;
         }
-        .estado-error {
-            background: #f8d7da;
-            color: #721c24;
+        
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
         }
-        .estado-info {
-            background: #d1ecf1;
-            color: #0c5460;
+        
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
         }
+        
+        .status-warning {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+        
         hr {
-            margin: 15px 0;
+            margin: 16px 0;
             border: none;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+            padding: 16px 20px;
+            background: #f8fafc;
         }
     </style>
 </head>
 <body>
-    <div class="ticket">
+    <div class="paper">
         <div class="header">
             <h1>🐟 COTILPEZ S.A.S.</h1>
-            <p>Impresión Bluetooth - DPP-350</p>
+            <p>Impresión con RawBT - DPP-350</p>
         </div>
         
-        <div class="contenido">
-            <div id="infoCliente" class="info-venta">
-                <!-- Se llena con los datos -->
+        <div class="content">
+            <div id="infoVenta" class="info-card">
+                <p>📄 Cargando información...</p>
             </div>
             
-            <div id="preview" class="preview">
-                <!-- Vista previa del ticket -->
+            <div id="ticketPreview" class="ticket-preview">
+                ⏳ Generando ticket...
             </div>
             
-            <div class="botones-row">
-                <button id="btnCopiar" class="btn-copiar">📋 Copiar</button>
-                <button id="btnCerrar" class="btn-cerrar">❌ Cerrar</button>
+            <button id="btnImprimir" class="btn-primary">🖨️ IMPRIMIR TICKET</button>
+            
+            <div class="flex-buttons">
+                <button id="btnCopiar" class="btn-secondary">📋 COPIAR</button>
+                <button id="btnCerrar" class="btn-danger">❌ CERRAR</button>
             </div>
             
-            <button id="btnImprimir" class="btn-imprimir">🖨️ IMPRIMIR TICKET</button>
-            
-            <div id="estado" class="estado estado-info">
+            <div id="status" class="status status-info">
                 ⚪ Listo para imprimir
             </div>
+        </div>
+        
+        <div class="footer">
+            Conecta tu impresora DPP-350 en RawBT | PIN: 0000
         </div>
     </div>
 
     <script>
-        // Variables globales
-        let ticketTexto = '';
-        let ticketESC = '';
-        let datosVenta = null;
+        // ============================================================
+        // VARIABLES GLOBALES
+        // ============================================================
+        let ticketTexto = '';      // Ticket en texto plano (legible)
+        let datosVenta = null;     // Datos de la venta
+        let totalNumerico = 0;     // Total en número
         
-        // Leer datos de la URL
+        // ============================================================
+        // LEER DATOS DE LA URL (lo que envía Apps Script)
+        // ============================================================
         function leerDatosURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const productosRaw = urlParams.get('productos');
@@ -185,175 +250,219 @@
                 productos: []
             };
             
+            totalNumerico = parseFloat(datosVenta.total) || 0;
+            
             if (productosRaw) {
                 try {
                     datosVenta.productos = JSON.parse(productosRaw);
                 } catch(e) {
-                    console.error('Error parsing productos:', e);
+                    console.error('Error parseando productos:', e);
+                    datosVenta.productos = [];
                 }
             }
             
-            // Mostrar información del cliente
-            mostrarInfoCliente();
+            // Mostrar información de la venta
+            mostrarInfoVenta();
             
-            // Generar tickets
+            // Generar el ticket
             ticketTexto = generarTicketTexto();
-            ticketESC = generarTicketESC();
             
             // Mostrar preview
-            document.getElementById('preview').textContent = ticketTexto;
+            document.getElementById('ticketPreview').innerText = ticketTexto;
             
             return datosVenta.factura !== 'S/N';
         }
         
-        // Mostrar información de la venta
-        function mostrarInfoCliente() {
-            const container = document.getElementById('infoCliente');
+        // ============================================================
+        // MOSTRAR INFORMACIÓN DE LA VENTA
+        // ============================================================
+        function mostrarInfoVenta() {
+            const container = document.getElementById('infoVenta');
             container.innerHTML = `
-                <p><strong>📄 Factura #:</strong> ${datosVenta.factura}</p>
-                <p><strong>👤 Cliente:</strong> ${datosVenta.cliente}</p>
-                <p><strong>💰 Total:</strong> $${parseFloat(datosVenta.total).toLocaleString()}</p>
-                <p><strong>📅 Fecha:</strong> ${datosVenta.fecha}</p>
-                <p><strong>📦 Productos:</strong> ${datosVenta.productos.length}</p>
+                <p><strong>📄 FACTURA #:</strong> ${datosVenta.factura}</p>
+                <p><strong>👤 CLIENTE:</strong> ${escapeHtml(datosVenta.cliente)}</p>
+                <p><strong>💰 TOTAL:</strong> $${totalNumerico.toLocaleString()}</p>
+                <p><strong>📅 FECHA:</strong> ${datosVenta.fecha}</p>
+                <p><strong>📦 PRODUCTOS:</strong> ${datosVenta.productos.length}</p>
             `;
         }
         
-        // Generar ticket en texto legible (para preview)
+        // ============================================================
+        // GENERAR TICKET EN TEXTO PLANO (con formato bonito)
+        // ============================================================
         function generarTicketTexto() {
-            let ticket = '';
-            ticket += '═'.repeat(32) + '\n';
-            ticket += 'COTILPEZ S.A.S.\n';
-            ticket += 'NIT: 900.000.000-0\n';
-            ticket += '═'.repeat(32) + '\n';
-            ticket += `Factura: ${datosVenta.factura}\n`;
-            ticket += `Cliente: ${datosVenta.cliente}\n`;
-            ticket += `Fecha: ${datosVenta.fecha}\n`;
-            ticket += '─'.repeat(32) + '\n';
+            const ancho = 32;
+            let t = '';
+            
+            t += '═'.repeat(ancho) + '\n';
+            t += centerText('COTILPEZ S.A.S.', ancho) + '\n';
+            t += centerText('NIT: 900.000.000-0', ancho) + '\n';
+            t += '═'.repeat(ancho) + '\n';
+            t += `Factura: ${datosVenta.factura}\n`;
+            t += `Cliente: ${datosVenta.cliente}\n`;
+            t += `Fecha: ${datosVenta.fecha}\n`;
+            t += '─'.repeat(ancho) + '\n';
+            t += padRight('Cant', 5) + padRight('Producto', 18) + padRight('Total', 9) + '\n';
+            t += '┄'.repeat(ancho) + '\n';
             
             for (const p of datosVenta.productos) {
-                ticket += `${p.cantidad} x ${p.nombre}\n`;
-                ticket += `     $${p.subtotal.toLocaleString()}\n`;
+                const cantidad = p.cantidad.toString();
+                const nombre = truncateText(p.nombre, 18);
+                const subtotal = formatMoneda(p.subtotal);
+                t += padRight(cantidad, 5) + padRight(nombre, 18) + padRight(subtotal, 9) + '\n';
             }
             
-            ticket += '─'.repeat(32) + '\n';
-            ticket += `TOTAL: $${parseFloat(datosVenta.total).toLocaleString()}\n`;
-            ticket += '═'.repeat(32) + '\n';
-            ticket += '¡GRACIAS POR SU COMPRA!\n';
-            ticket += 'Vuelva pronto\n';
-            ticket += '═'.repeat(32) + '\n';
+            t += '─'.repeat(ancho) + '\n';
+            t += padRight('TOTAL', 23) + padRight('$' + totalNumerico.toLocaleString(), 9) + '\n';
+            t += '═'.repeat(ancho) + '\n';
+            t += centerText('¡GRACIAS POR SU COMPRA!', ancho) + '\n';
+            t += centerText('Vuelva pronto', ancho) + '\n';
+            t += '═'.repeat(ancho) + '\n';
             
-            return ticket;
+            return t;
         }
         
-        // Generar ticket con comandos ESC/POS (para impresora)
-        function generarTicketESC() {
-            const ESC = '\x1B';
-            const GS = '\x1D';
-            
-            let ticket = '';
-            ticket += ESC + '@';                    // Reset
-            ticket += ESC + 'a' + '\x01';           // Centrar
-            ticket += '═'.repeat(32) + '\n';
-            ticket += 'COTILPEZ S.A.S.\n';
-            ticket += 'NIT: 900.000.000-0\n';
-            ticket += '═'.repeat(32) + '\n';
-            
-            ticket += ESC + 'a' + '\x00';           // Izquierda
-            ticket += `Factura: ${datosVenta.factura}\n`;
-            ticket += `Cliente: ${datosVenta.cliente}\n`;
-            ticket += `Fecha: ${datosVenta.fecha}\n`;
-            ticket += '─'.repeat(32) + '\n';
-            
-            for (const p of datosVenta.productos) {
-                ticket += `${p.cantidad} x ${p.nombre}\n`;
-                ticket += `     $${p.subtotal.toLocaleString()}\n`;
-            }
-            
-            ticket += '─'.repeat(32) + '\n';
-            ticket += ESC + 'a' + '\x02';           // Negrita
-            ticket += `TOTAL: $${parseFloat(datosVenta.total).toLocaleString()}\n`;
-            ticket += ESC + 'a' + '\x00';
-            ticket += '\n';
-            ticket += ESC + 'a' + '\x01';           // Centrar
-            ticket += '¡GRACIAS POR SU COMPRA!\n';
-            ticket += 'Vuelva pronto\n';
-            ticket += '═'.repeat(32) + '\n';
-            ticket += '\n\n';
-            ticket += GS + 'V' + '\x42' + '\x00';   // Cortar papel
-            
-            return ticket;
+        // ============================================================
+        // FUNCIONES AUXILIARES PARA FORMATEAR TEXTO
+        // ============================================================
+        function centerText(texto, ancho) {
+            if (texto.length >= ancho) return texto.substring(0, ancho);
+            const espacios = ancho - texto.length;
+            const izquierda = Math.floor(espacios / 2);
+            return ' '.repeat(izquierda) + texto + ' '.repeat(espacios - izquierda);
         }
         
-        // Imprimir - Abrir Serial Bluetooth Terminal
-        function imprimir() {
-            const estadoDiv = document.getElementById('estado');
+        function padRight(texto, ancho) {
+            const str = String(texto);
+            if (str.length >= ancho) return str.substring(0, ancho);
+            return str + ' '.repeat(ancho - str.length);
+        }
+        
+        function padLeft(texto, ancho) {
+            const str = String(texto);
+            if (str.length >= ancho) return str.substring(0, ancho);
+            return ' '.repeat(ancho - str.length) + str;
+        }
+        
+        function truncateText(texto, maxLen) {
+            const str = String(texto || '');
+            if (str.length <= maxLen) return str;
+            return str.substring(0, maxLen - 3) + '...';
+        }
+        
+        function formatMoneda(valor) {
+            const num = parseFloat(valor);
+            if (isNaN(num)) return '0';
+            return num.toLocaleString();
+        }
+        
+        function escapeHtml(texto) {
+            if (!texto) return '';
+            return texto.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // ============================================================
+        // FUNCIÓN PRINCIPAL: IMPRIMIR CON RAWBT
+        // ============================================================
+        function imprimirConRawBT() {
+            const statusDiv = document.getElementById('status');
             
-            if (!ticketESC) {
-                estadoDiv.innerHTML = '❌ Error: No hay ticket para imprimir';
-                estadoDiv.className = 'estado estado-error';
+            if (!ticketTexto || datosVenta.factura === 'S/N') {
+                statusDiv.innerHTML = '❌ Error: No hay ticket para imprimir';
+                statusDiv.className = 'status status-error';
                 return;
             }
             
-            // Codificar el ticket para URL
-            const dataEncoded = encodeURIComponent(ticketESC);
+            // PASO 1: Codificar el ticket para que sea seguro en una URL
+            // Los saltos de línea (\n) y caracteres especiales se convierten a %0A, %20, etc.
+            const ticketCodificado = encodeURIComponent(ticketTexto);
             
-            // Intentar abrir Serial Bluetooth Terminal
-            const intentUri = `bt_terminal://send?data=${dataEncoded}`;
+            // PASO 2: Construir el Intent URI para RawBT
+            // Este es el FORMATO ESTÁNDAR que Android entiende
+            // - "intent:" indica que es un Intent de Android
+            // - "#Intent;scheme=rawbt;" le dice a Android que use el protocolo "rawbt"
+            // - "package=ru.a402d.rawbtprinter" identifica la app RawBT únicamente
+            // - "end;" cierra el Intent
+            const intentUri = `intent:${ticketCodificado}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
             
-            estadoDiv.innerHTML = '📤 Abriendo Serial Bluetooth Terminal...';
-            estadoDiv.className = 'estado estado-info';
+            // También puedes usar el formato más simple (sin fallback):
+            // const intentUri = `rawbt:${ticketCodificado}`;
             
-            // Abrir la app
+            statusDiv.innerHTML = '📤 Abriendo RawBT...';
+            statusDiv.className = 'status status-info';
+            
+            // PASO 3: Redirigir el navegador a ese enlace especial
+            // Android interceptará el "intent:" y abrirá RawBT automáticamente
             window.location.href = intentUri;
             
-            // Actualizar estado después de 1 segundo
+            // PASO 4: Actualizar estado y preparar cierre
             setTimeout(() => {
-                estadoDiv.innerHTML = '✅ Ticket enviado a Serial Bluetooth Terminal. La ventana se cerrará en 3 segundos.';
-                estadoDiv.className = 'estado estado-exito';
-            }, 1000);
+                statusDiv.innerHTML = '✅ Ticket enviado a RawBT. La ventana se cerrará en 3 segundos.';
+                statusDiv.className = 'status status-success';
+            }, 1500);
             
-            // Cerrar ventana después de 3 segundos
+            // Cerrar la ventana después de 4 segundos
             setTimeout(() => {
                 window.close();
             }, 4000);
         }
         
-        // Copiar ticket al portapapeles
+        // ============================================================
+        // COPIAR TICKET AL PORTAPAPELES (FALLBACK MANUAL)
+        // ============================================================
         function copiarTicket() {
-            navigator.clipboard.writeText(ticketTexto).then(() => {
-                const estadoDiv = document.getElementById('estado');
-                estadoDiv.innerHTML = '✅ Ticket copiado al portapapeles';
-                estadoDiv.className = 'estado estado-exito';
+            if (!ticketTexto) {
+                alert('No hay ticket para copiar');
+                return;
+            }
+            
+            // Limpiar caracteres especiales para que sea legible al copiar
+            let ticketLimpio = ticketTexto;
+            
+            navigator.clipboard.writeText(ticketLimpio).then(() => {
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML = '✅ Ticket copiado al portapapeles';
+                statusDiv.className = 'status status-success';
                 
                 setTimeout(() => {
-                    estadoDiv.innerHTML = '⚪ Listo para imprimir';
-                    estadoDiv.className = 'estado estado-info';
+                    statusDiv.innerHTML = '⚪ Listo para imprimir';
+                    statusDiv.className = 'status status-info';
                 }, 2000);
             }).catch(() => {
-                const estadoDiv = document.getElementById('estado');
-                estadoDiv.innerHTML = '❌ Error al copiar';
-                estadoDiv.className = 'estado estado-error';
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML = '❌ Error al copiar. Copia manualmente.';
+                statusDiv.className = 'status status-error';
             });
         }
         
-        // Cerrar ventana
-        function cerrar() {
+        // ============================================================
+        // CERRAR VENTANA
+        // ============================================================
+        function cerrarVentana() {
             window.close();
         }
         
-        // Inicializar cuando la página cargue
+        // ============================================================
+        // INICIALIZAR TODO CUANDO CARGA LA PÁGINA
+        // ============================================================
         document.addEventListener('DOMContentLoaded', () => {
             const hayDatos = leerDatosURL();
             
             if (!hayDatos) {
-                document.getElementById('preview').innerHTML = '⚠️ No hay datos de factura para imprimir';
-                document.getElementById('estado').innerHTML = '⚠️ Esperando datos...';
+                document.getElementById('ticketPreview').innerHTML = '⚠️ No hay datos de factura para imprimir';
+                document.getElementById('status').innerHTML = '⚠️ Esperando datos del POS...';
+                document.getElementById('status').className = 'status status-warning';
             }
             
-            // Asignar eventos
-            document.getElementById('btnImprimir').onclick = imprimir;
+            // Asignar eventos a los botones
+            document.getElementById('btnImprimir').onclick = imprimirConRawBT;
             document.getElementById('btnCopiar').onclick = copiarTicket;
-            document.getElementById('btnCerrar').onclick = cerrar;
+            document.getElementById('btnCerrar').onclick = cerrarVentana;
         });
     </script>
 </body>
