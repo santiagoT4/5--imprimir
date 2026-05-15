@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impresora DPP-350 - Diagnóstico</title>
+    <style>
+        body {
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        button {
+            background: #0f766e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .device-list {
+            text-align: left;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .device-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .device-item:hover {
+            background: #f0f0f0;
+        }
+        .device-name {
+            font-weight: bold;
+        }
+        .device-id {
+            font-size: 11px;
+            color: #666;
+        }
+        .estado {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .exito { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🖨️ Diagnóstico Bluetooth DPP-350</h2>
+        
+        <div class="info" style="margin-bottom: 15px;">
+            📌 <strong>Instrucciones:</strong><br>
+            1. Asegúrate que la impresora esté ENCENDIDA<br>
+            2. Debe estar en modo pairing (luz parpadeando RÁPIDO)<br>
+            3. Haz clic en "Buscar Dispositivos"<br>
+            4. Selecciona tu impresora de la lista (puede aparecer como "Desconocido")
+        </div>
+        
+        <button id="btnBuscar">🔍 Buscar Dispositivos Bluetooth</button>
+        
+        <div id="listaDispositivos" class="device-list" style="display:none;">
+            <strong>📱 Dispositivos encontrados (haz clic en el que creas que es tu impresora):</strong>
+            <div id="dispositivosContainer"></div>
+        </div>
+        
+        <div id="estado" class="estado"></div>
+        
+        <div id="panelImpresion" style="display:none;">
+            <hr>
+            <h3>🖨️ Impresión de Ticket</h3>
+            <div id="previewTicket" style="background:#f8f9fa; padding:10px; border-radius:8px; font-family:monospace; font-size:12px; text-align:left; white-space:pre-wrap; max-height:300px; overflow:auto;"></div>
+            <button id="btnImprimir">🖨️ Imprimir Ticket</button>
+            <button id="btnCerrar">❌ Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        let deviceSeleccionado = null;
+        let characteristic = null;
+        let datosTicket = null;
+        
+        // Leer datos de la URL
+        function leerDatosURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productosRaw = urlParams.get('productos');
+            
+            datosTicket = {
+                factura: urlParams.get('factura') || 'S/N',
+                cliente: urlParams.get('cliente') || 'Consumidor Final',
+                total: urlParams.get('total') || '0',
+                fecha: urlParams.get('fecha') || new Date().toLocaleString(),
+                productos: []
+            };
+            
+            if (productosRaw) {
+                try {
+                    datosTicket.productos = JSON.parse(productosRaw);
+                } catch(e) {}
+            }
+            
+            if (datosTicket.factura !== 'S/N') {
+                document.getElementById('panelImpresion').style.display = 'block';
+                mostrarPreviewTicket();
+            }
+        }
+        
+        function mostrarPreviewTicket() {
+            const ancho = 32;
+            let ticket = '';
+            ticket += '═'.repeat(ancho) + '\n';
+            ticket += centerText('COTILPEZ S.A.S.', ancho) + '\n';
+            ticket += centerText('NIT: 900.000.000-0', ancho) + '\n';
+            ticket += '─'.repeat(ancho) + '\n';
+            ticket += `Factura: ${datosTicket.factura}\n`;
+            ticket += `Cliente: ${datosTicket.cliente}\n`;
+            ticket += `Total: $${datosTicket.total}\n`;
+            ticket += '─'.repeat(ancho) + '\n';
+            for (const p of datosTicket.productos) {
+                ticket += `${p.cantidad} x ${p.nombre}\n`;
+                ticket += `   $${p.subtotal.toLocaleString()}\n`;
+            }
+            ticket += '─'.repeat(ancho) + '\n';
+            ticket += centerText('¡GRACIAS!', ancho) + '\n';
+            ticket += '═'.repeat(ancho) + '\n';
+            
+            document.getElementById('previewTicket').textContent = ticket;
+        }
+        
+        function centerText(texto, ancho) {
+            if (texto.length >= ancho) return texto;
+            const espacios = ancho - texto.length;
+            const left = Math.floor(espacios / 2);
+            return ' '.repeat(left) + texto;
+        }
+        
+        // Buscar dispositivos - MUESTRA TODOS
+        async function buscarDispositivos() {
+            const estadoDiv = document.getElementById('estado');
+            const btn = document.getElementById('btnBuscar');
+            
+            if (!navigator.bluetooth) {
+                estadoDiv.innerHTML = '❌ Web Bluetooth no soportado. Usa Chrome en Android.';
+                estadoDiv.className = 'estado error';
+                return;
+            }
+            
+            try {
+                btn.disabled = true;
+                estadoDiv.innerHTML = '🔍 Buscando dispositivos... (permite la ubicación si el navegador lo pide)';
+                estadoDiv.className = 'estado info';
+                
+                // 🔥 CLAVE: acceptAllDevices: true - muestra TODOS los dispositivos
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+                });
+                
+                deviceSeleccionado = device;
+                
+                estadoDiv.innerHTML = `✅ Dispositivo seleccionado: ${device.name || 'SIN NOMBRE (Desconocido)'}\nID: ${device.id}\nConectando...`;
+                
+                // Conectar
+                const server = await device.gatt.connect();
+                estadoDiv.innerHTML = `📡 Conectado a ${device.name || 'Desconocido'}, buscando servicio...`;
+                
+                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+                characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+                
+                estadoDiv.innerHTML = `✅ ¡Conectado exitosamente a ${device.name || 'tu impresora'}!`;
+                estadoDiv.className = 'estado exito';
+                
+                // Guardar para futuras conexiones
+                localStorage.setItem('impresora_id', device.id);
+                localStorage.setItem('impresora_name', device.name || 'Impresora');
+                
+                // Si hay ticket, preguntar si imprimir
+                if (datosTicket && datosTicket.factura !== 'S/N') {
+                    setTimeout(() => {
+                        if (confirm('✅ Impresora conectada. ¿Imprimir ticket ahora?')) {
+                            imprimirTicket();
+                        }
+                    }, 500);
+                }
+                
+            } catch (error) {
+                console.error(error);
+                estadoDiv.innerHTML = `❌ Error: ${error.message}\n\nConsejos:\n- Activa Ubicación/GPS\n- Reinicia la impresora\n- Ciérrala y ábrela en modo pairing`;
+                estadoDiv.className = 'estado error';
+                btn.disabled = false;
+            }
+        }
+        
+        async function imprimirTicket() {
+            if (!characteristic) {
+                alert('Conecta la impresora primero');
+                return;
+            }
+            
+            try {
+                const ancho = 32;
+                let ticket = '';
+                ticket += '\x1B@';  // Reset
+                ticket += '\x1Ba\x01';  // Centrar
+                ticket += '═'.repeat(ancho) + '\n';
+                ticket += centerText('COTILPEZ S.A.S.', ancho) + '\n';
+                ticket += centerText('NIT: 900.000.000-0', ancho) + '\n';
+                ticket += '\x1Ba\x00';  // Izquierda
+                ticket += '─'.repeat(ancho) + '\n';
+                ticket += `Factura: ${datosTicket.factura}\n`;
+                ticket += `Cliente: ${datosTicket.cliente}\n`;
+                ticket += `Total: $${datosTicket.total}\n`;
+                ticket += '─'.repeat(ancho) + '\n';
+                for (const p of datosTicket.productos) {
+                    ticket += `${p.cantidad} x ${p.nombre}\n`;
+                }
+                ticket += '─'.repeat(ancho) + '\n';
+                ticket += '\x1Ba\x01';
+                ticket += centerText('¡GRACIAS!', ancho) + '\n';
+                ticket += '\x1Ba\x00';
+                ticket += '\x1DV\x42\x00';  // Cortar
+                
+                const encoder = new TextEncoder();
+                await characteristic.writeValue(encoder.encode(ticket));
+                
+                document.getElementById('estado').innerHTML = '✅ ¡Ticket impreso!';
+                setTimeout(() => window.close(), 3000);
+                
+            } catch (error) {
+                alert('Error al imprimir: ' + error.message);
+            }
+        }
+        
+        function cerrar() {
+            if (deviceSeleccionado && deviceSeleccionado.gatt.connected) {
+                deviceSeleccionado.gatt.disconnect();
+            }
+            window.close();
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            leerDatosURL();
+            document.getElementById('btnBuscar').onclick = buscarDispositivos;
+            document.getElementById('btnImprimir').onclick = imprimirTicket;
+            document.getElementById('btnCerrar').onclick = cerrar;
+        });
+    </script>
+</body>
+</html>
