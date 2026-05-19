@@ -304,18 +304,18 @@
             t += `Cliente: ${datosVenta.cliente}\n`;
             t += `Fecha: ${datosVenta.fecha}\n`;
             t += '_'.repeat(ancho) + '\n';
-            t += padRight('Cant', 5) + padRight('Producto', 18) + padRight('Total', 9) + '\n';
+            t += padRight('Cant', 6) + padRight('Producto', 28) + padRight('Total', 14) + '\n';
             t += '_'.repeat(ancho) + '\n';
             
             for (const p of datosVenta.productos) {
                 const cantidad = p.cantidad.toString();
-                const nombre = truncateText(p.nombre, 18);
+                const nombre = truncateText(p.nombre, 28);
                 const subtotal = formatMoneda(p.subtotal);
-                t += padRight(cantidad, 5) + padRight(nombre, 18) + padRight(subtotal, 9) + '\n';
+                t += padRight(cantidad, 6) + padRight(nombre, 28) + padRight(subtotal, 14) + '\n';
             }
             
             t += '_'.repeat(ancho) + '\n';
-            t += padRight('TOTAL', 23) + padRight('$' + totalNumerico.toLocaleString(), 9) + '\n';
+            t += padRight('TOTAL', 34) + padRight('$' + totalNumerico.toLocaleString(), 14) + '\n';
             t += '_'.repeat(ancho) + '\n';
             t += centerText('¡GRACIAS POR SU COMPRA!', ancho) + '\n';
             t += centerText('Vuelva pronto', ancho) + '\n';
