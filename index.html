@@ -247,7 +247,7 @@
                 cliente: urlParams.get('cliente') || 'Consumidor Final',
                 total: urlParams.get('total') || '0',
                 fecha: urlParams.get('fecha') || new Date().toLocaleString(),
-                comentario: urlParams.get('comentario') || '',
+                comentario: urlParams.get('observacion') || '',
                 productos: []
             };
             
@@ -306,11 +306,11 @@
             t += `Fecha: ${datosVenta.fecha}\n`;
 
        // ========== AGREGAR COMENTARIO SI EXISTE ==========
-            if (datosVenta.comentario && datosVenta.comentario.trim() !== '') {
+            if (datosVenta.comentario && datosVenta.observacion.trim() !== '') {
                 t += '_'.repeat(ancho) + '\n';
                 t += centerText('COMENTARIO', ancho) + '\n';
         // Dividir comentario largo en líneas de máximo ancho-4 caracteres
-                const lineas = wrapText(datosVenta.comentario, ancho - 4);
+                const lineas = wrapText(datosVenta.observacion, ancho - 4);
                 for (const linea of lineas) {
                     t += `  ${linea}\n`;
                 }
