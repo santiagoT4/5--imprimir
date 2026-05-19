@@ -294,16 +294,16 @@
             const ancho = 48;
             let t = '';
             
-            t += '═'.repeat(ancho) + '\n';
+            t += '_'.repeat(ancho) + '\n';
             t += centerText('COTILPEZ S.A.S.', ancho) + '\n';
             t += centerText('NIT: 900.300.702-0', ancho) + '\n';
-            t += '═'.repeat(ancho) + '\n';
+            t += '_'.repeat(ancho) + '\n';
             t += `Factura: ${datosVenta.factura}\n`;
             t += `Cliente: ${datosVenta.cliente}\n`;
             t += `Fecha: ${datosVenta.fecha}\n`;
-            t += '─'.repeat(ancho) + '\n';
+            t += '_'.repeat(ancho) + '\n';
             t += padRight('Cant', 5) + padRight('Producto', 18) + padRight('Total', 9) + '\n';
-            t += '┄'.repeat(ancho) + '\n';
+            t += '_'.repeat(ancho) + '\n';
             
             for (const p of datosVenta.productos) {
                 const cantidad = p.cantidad.toString();
@@ -312,12 +312,12 @@
                 t += padRight(cantidad, 5) + padRight(nombre, 18) + padRight(subtotal, 9) + '\n';
             }
             
-            t += '─'.repeat(ancho) + '\n';
+            t += '_'.repeat(ancho) + '\n';
             t += padRight('TOTAL', 23) + padRight('$' + totalNumerico.toLocaleString(), 9) + '\n';
-            t += '═'.repeat(ancho) + '\n';
+            t += '_'.repeat(ancho) + '\n';
             t += centerText('¡GRACIAS POR SU COMPRA!', ancho) + '\n';
             t += centerText('Vuelva pronto', ancho) + '\n';
-            t += '═'.repeat(ancho) + '\n';
+            t += '_'.repeat(ancho) + '\n';
             
             return t;
         }
