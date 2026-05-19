@@ -231,9 +231,9 @@
         // ============================================================
         // VARIABLES GLOBALES
         // ============================================================
-        let ticketTexto = '';      // Ticket en texto plano (legible)
-        let datosVenta = null;     // Datos de la venta
-        let totalNumerico = 0;     // Total en número
+        let ticketTexto = '';
+        let datosVenta = null;
+        let totalNumerico = 0;
         
         // ============================================================
         // LEER DATOS DE LA URL (lo que envía Apps Script)
@@ -247,7 +247,7 @@
                 cliente: urlParams.get('cliente') || 'Consumidor Final',
                 total: urlParams.get('total') || '0',
                 fecha: urlParams.get('fecha') || new Date().toLocaleString(),
-                comentario: urlParams.get('comentario') || '',
+                comentario: urlParams.get('comentario') || '',  // ← CAMBIADO: ahora busca 'comentario'
                 productos: []
             };
             
@@ -262,13 +262,8 @@
                 }
             }
             
-            // Mostrar información de la venta
             mostrarInfoVenta();
-            
-            // Generar el ticket
             ticketTexto = generarTicketTexto();
-            
-            // Mostrar preview
             document.getElementById('ticketPreview').innerText = ticketTexto;
             
             return datosVenta.factura !== 'S/N';
@@ -279,17 +274,23 @@
         // ============================================================
         function mostrarInfoVenta() {
             const container = document.getElementById('infoVenta');
+            let comentarioHtml = '';
+            if (datosVenta.comentario && datosVenta.comentario.trim() !== '') {
+                comentarioHtml = `<p><strong>💬 COMENTARIO:</strong> ${escapeHtml(datosVenta.comentario)}</p>`;
+            }
+            
             container.innerHTML = `
                 <p><strong>📄 FACTURA #:</strong> ${datosVenta.factura}</p>
                 <p><strong>👤 CLIENTE:</strong> ${escapeHtml(datosVenta.cliente)}</p>
                 <p><strong>💰 TOTAL:</strong> $${totalNumerico.toLocaleString()}</p>
                 <p><strong>📅 FECHA:</strong> ${datosVenta.fecha}</p>
                 <p><strong>📦 PRODUCTOS:</strong> ${datosVenta.productos.length}</p>
+                ${comentarioHtml}
             `;
         }
         
         // ============================================================
-        // GENERAR TICKET EN TEXTO PLANO (con formato bonito)
+        // GENERAR TICKET EN TEXTO PLANO
         // ============================================================
         function generarTicketTexto() {
             const ancho = 48;
@@ -298,26 +299,26 @@
             t += '_'.repeat(ancho) + '\n';
             t += centerText('COTILPEZ S.A.S.', ancho) + '\n';
             t += centerText('NIT: 900.300.702-0', ancho) + '\n';
-            t += `Calle 43 8b 22 Pereira Risaralda \n`
-            t += `Comercializadora de Tilapias y Pescados \n`
+            t += `Calle 43 8b 22 Pereira Risaralda \n`;
+            t += `Comercializadora de Tilapias y Pescados \n`;
             t += '_'.repeat(ancho) + '\n';
             t += `Factura: ${datosVenta.factura}\n`;
             t += `Cliente: ${datosVenta.cliente}\n`;
             t += `Fecha: ${datosVenta.fecha}\n`;
 
-       // ========== AGREGAR COMENTARIO SI EXISTE ==========
+            // ========== AGREGAR COMENTARIO SI EXISTE ==========
+            // ← CAMBIADO: condición corregida
             if (datosVenta.comentario && datosVenta.comentario.trim() !== '') {
                 t += '_'.repeat(ancho) + '\n';
                 t += centerText('COMENTARIO', ancho) + '\n';
-        // Dividir comentario largo en líneas de máximo ancho-4 caracteres
+                // ← CAMBIADO: usar datosVenta.comentario, no observacion
                 const lineas = wrapText(datosVenta.comentario, ancho - 4);
                 for (const linea of lineas) {
                     t += `  ${linea}\n`;
                 }
             }
-        // ==================================================
+            // ==================================================
 
-            
             t += '_'.repeat(ancho) + '\n';
             t += padRight('Cant', 6) + padRight('Producto', 28) + padRight('Total', 14) + '\n';
             t += '_'.repeat(ancho) + '\n';
@@ -337,6 +338,28 @@
             t += '_'.repeat(ancho) + '\n';
             
             return t;
+        }
+        
+        // ============================================================
+        // FUNCIÓN PARA DIVIDIR TEXTO LARGO EN MÚLTIPLES LÍNEAS
+        // ============================================================
+        function wrapText(texto, maxLen) {
+            if (!texto) return [];
+            const palabras = texto.split(' ');
+            const lineas = [];
+            let lineaActual = '';
+    
+            for (const palabra of palabras) {
+                if ((lineaActual + ' ' + palabra).length <= maxLen) {
+                    lineaActual += (lineaActual ? ' ' : '') + palabra;
+                } else {
+                    if (lineaActual) lineas.push(lineaActual);
+                    lineaActual = palabra;
+                }
+            }
+            if (lineaActual) lineas.push(lineaActual);
+    
+            return lineas;
         }
         
         // ============================================================
@@ -395,42 +418,26 @@
                 return;
             }
             
-            // PASO 1: Codificar el ticket para que sea seguro en una URL
-            // Los saltos de línea (\n) y caracteres especiales se convierten a %0A, %20, etc.
             const ticketCodificado = encodeURIComponent(ticketTexto);
-            
-            // PASO 2: Construir el Intent URI para RawBT
-            // Este es el FORMATO ESTÁNDAR que Android entiende
-            // - "intent:" indica que es un Intent de Android
-            // - "#Intent;scheme=rawbt;" le dice a Android que use el protocolo "rawbt"
-            // - "package=ru.a402d.rawbtprinter" identifica la app RawBT únicamente
-            // - "end;" cierra el Intent
             const intentUri = `intent:${ticketCodificado}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-            
-            // También puedes usar el formato más simple (sin fallback):
-            // const intentUri = `rawbt:${ticketCodificado}`;
             
             statusDiv.innerHTML = '📤 Abriendo RawBT...';
             statusDiv.className = 'status status-info';
             
-            // PASO 3: Redirigir el navegador a ese enlace especial
-            // Android interceptará el "intent:" y abrirá RawBT automáticamente
             window.location.href = intentUri;
             
-            // PASO 4: Actualizar estado y preparar cierre
             setTimeout(() => {
                 statusDiv.innerHTML = '✅ Ticket enviado a RawBT. La ventana se cerrará en 3 segundos.';
                 statusDiv.className = 'status status-success';
             }, 1500);
             
-            // Cerrar la ventana después de 4 segundos
             setTimeout(() => {
                 window.close();
             }, 4000);
         }
         
         // ============================================================
-        // COPIAR TICKET AL PORTAPAPELES (FALLBACK MANUAL)
+        // COPIAR TICKET AL PORTAPAPELES
         // ============================================================
         function copiarTicket() {
             if (!ticketTexto) {
@@ -438,10 +445,7 @@
                 return;
             }
             
-            // Limpiar caracteres especiales para que sea legible al copiar
-            let ticketLimpio = ticketTexto;
-            
-            navigator.clipboard.writeText(ticketLimpio).then(() => {
+            navigator.clipboard.writeText(ticketTexto).then(() => {
                 const statusDiv = document.getElementById('status');
                 statusDiv.innerHTML = '✅ Ticket copiado al portapapeles';
                 statusDiv.className = 'status status-success';
@@ -463,29 +467,7 @@
         function cerrarVentana() {
             window.close();
         }
-
-        // ============================================================
-        // FUNCIÓN PARA DIVIDIR TEXTO LARGO EN MÚLTIPLES LÍNEAS
-        // ============================================================
-        function wrapText(texto, maxLen) {
-            if (!texto) return [];
-            const palabras = texto.split(' ');
-            const lineas = [];
-            let lineaActual = '';
-    
-            for (const palabra of palabras) {
-                if ((lineaActual + ' ' + palabra).length <= maxLen) {
-                    lineaActual += (lineaActual ? ' ' : '') + palabra;
-                } else {
-                    if (lineaActual) lineas.push(lineaActual);
-                    lineaActual = palabra;
-                }
-            }
-            if (lineaActual) lineas.push(lineaActual);
-    
-            return lineas;
-        }
-
+        
         // ============================================================
         // INICIALIZAR TODO CUANDO CARGA LA PÁGINA
         // ============================================================
@@ -498,7 +480,6 @@
                 document.getElementById('status').className = 'status status-warning';
             }
             
-            // Asignar eventos a los botones
             document.getElementById('btnImprimir').onclick = imprimirConRawBT;
             document.getElementById('btnCopiar').onclick = copiarTicket;
             document.getElementById('btnCerrar').onclick = cerrarVentana;
