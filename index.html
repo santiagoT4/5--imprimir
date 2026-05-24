@@ -309,14 +309,15 @@
 
 
             t += '_'.repeat(ancho) + '\n';
-            t += padRight('Cant', 6) + padRight('Producto', 28) + padRight('Total', 14) + '\n';
+            t += padRight('Cant', 5) + padRight('Producto', 20) + padRight('Precio', 12) + padRight('Total', 11) + '\n';
             t += '_'.repeat(ancho) + '\n';
             
             for (const p of datosVenta.productos) {
                 const cantidad = p.cantidad.toString();
                 const nombre = truncateText(p.nombre, 28);
+                const precioUnitario = formatMoneda(p.precio_unitario);
                 const subtotal = formatMoneda(p.subtotal);
-                t += padRight(cantidad, 6) + padRight(nombre, 28) + padRight(subtotal, 14) + '\n';
+                t += padRight(cantidad, 6) + padRight(nombre, 28) + padRight(precioUnitario, 12) + padRight(subtotal, 14) + '\n';
             }
             
             t += '_'.repeat(ancho) + '\n';
