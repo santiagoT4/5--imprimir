@@ -314,12 +314,17 @@
             
             for (const p of datosVenta.productos) {
                 const cantidad = p.cantidad.toString();
-                const nombre = truncateText(p.nombre, 28);
+                const nombre = truncateText(p.nombre, 22);
                 const precioUnitario = formatMoneda(p.precio_unitario);
                 const subtotal = formatMoneda(p.subtotal);
                 
-                t += padRight(cantidad, 5) + padRight(nombre, 30) + padRight(subtotal, 10) + '\n';
-                t += padRight('', 5) + padRight(`(${precioUnitario} c/u)`, 30) + padRight('', 10) + '\n';
+                // Crear línea con puntos (ancho total fijo 35)
+                const lineaBase = padRight(cantidad, 5) + nombre;
+                const espaciosFaltantes = 32 - lineaBase.length;
+                const puntos = '.'.repeat(espaciosFaltantes > 0 ? espaciosFaltantes : 1);
+                
+                t += lineaBase + ' ' + puntos + ' ' + padLeft(subtotal, 8) + '\n';
+                t += padRight('', 5) + padRight(`(${precioUnitario} c/u)`, 27) + '\n';
             }
             
             t += '_'.repeat(ancho) + '\n';
