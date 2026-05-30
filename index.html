@@ -317,9 +317,9 @@
                 const nombre = truncateText(p.nombre, 18);
                 const precioUnitario = formatMoneda(p.precio_unitario);
                 const subtotal = formatMoneda(p.subtotal);
-                t += padRight(cantidad, 6) + padRight(nombre, 25)  + padRight(subtotal, 8) + '\n';
-                t += padRight(cantidad, 6)+ padRight(precioUnitario, 8) + '\n';
                 
+                t += padRight(cantidad, 6) + padRight(nombre, 25) + padRight(subtotal, 10) + '\n';
+                t += padRight('', 6) + padRight(`(${precioUnitario} c/u)`, 25) + padRight('', 10) + '\n';
             }
             
             t += '_'.repeat(ancho) + '\n';
