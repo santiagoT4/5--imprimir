@@ -309,17 +309,17 @@
 
 
             t += '_'.repeat(ancho) + '\n';
-            t += padRight('Cant', 6) + padRight('Producto', 30) + padRight('Total', 8) + '\n';
+            t += padRight('Cant', 5) + padRight('Producto', 25) + padRight('Total', 10) + '\n';
             t += '_'.repeat(ancho) + '\n';
             
             for (const p of datosVenta.productos) {
                 const cantidad = p.cantidad.toString();
-                const nombre = truncateText(p.nombre, 18);
+                const nombre = truncateText(p.nombre, 24);
                 const precioUnitario = formatMoneda(p.precio_unitario);
                 const subtotal = formatMoneda(p.subtotal);
                 
-                t += padRight(cantidad, 6) + padRight(nombre, 30) + padRight(subtotal, 4) + '\n';
-                t += padRight('', 6) + padRight(`(${precioUnitario} c/u)`, 25) + padRight('', 10) + '\n';
+                t += padRight(cantidad, 5) + padRight(nombre, 25) + padRight(subtotal, 10) + '\n';
+                t += padRight('', 5) + padRight(`(${precioUnitario} c/u)`, 25) + padRight('', 10) + '\n';
             }
             
             t += '_'.repeat(ancho) + '\n';
